@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009"
+			   xmlns:s="library://ns.adobe.com/flex/spark"
+			   xmlns:mx="library://ns.adobe.com/flex/mx"
+			   minWidth="955" minHeight="600" pageTitle="Tea Timer"
+			   creationComplete="initApp()">
+	<fx:Style source="teaonline.css"/>
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.utils.ArrayUtil;
+			
+			import spark.events.IndexChangeEvent;
+
+			import mx.controls.Alert;
+			import flash.utils.Timer;
+			import flash.events.TimerEvent;
+			
+			public var derTeaTimer:Timer = new Timer(100, gesamtzeit*10);
+			[Bindable] public var count:Number = 0;
+			public var TeeSound:Sound;
+			[Embed(source="assets/elephant.mp3")]
+			public var TeeSoundClass:Class;
+				
+		
+			private function initApp():void {
+				TeeAC = new ArrayCollection(TeeArray); 
+				MinutenStepper.value = ZeitArray[2];
+				gesamtzeit = ZeitArray[0] * 60;
+				TeeComboBox.selectedIndex = 0;
+				ZeitSlider.value=ZeitArray[0] * 60;
+			}
+			
+			private var TeeArray:Array = 
+				["Black Tea (short)", 
+				"Black Tea (long)",
+				"Black Tea (English)",
+				"Green Tea", 
+				"White Tea",
+				"Fruit Infusion", 
+				"Herbal Tea",
+				"Chai Tea",
+				"Coffee (French press, small)",
+				"Coffee (French press, large)"];
+			
+			[Bindable] private var TeeAC:ArrayCollection;
+			
+			[Bindable] public var gesamtzeit: int;
+
+			private var ZeitArray:Array = [3, 5, 1, 2, 3, 6, 8, 20, 2, 4];
+				
+			protected function StartButton_clickHandler(event:MouseEvent):void
+			{
+				if(StartButton.label=="Start!") {
+					this.derTeaTimer.addEventListener(TimerEvent.TIMER, TeeProgressUpdate);
+					this.derTeaTimer.addEventListener(TimerEvent.TIMER_COMPLETE, derTeeistFertig);
+					this.derTeaTimer.start();
+					StartButton.label="Stop";
+				}
+				else {
+					this.derTeaTimer.stop();
+					this.derTeaTimer.reset();
+					StartButton.label="Start!";
+					count=0;
+				}
+			}
+			
+			protected function TeeProgressUpdate(timerEvent:TimerEvent):void
+			{
+				if(count < gesamtzeit*10) {
+					count++;
+					this.TeaProgress.setProgress(count, gesamtzeit*10);
+					this.TeaProgress.label = "Loading your tea... " + Math.floor(count*10/gesamtzeit) + "% completed";
+				}
+				else derTeeistFertig();
+			}
+
+			
+			private function derTeeistFertig():void {
+				this.derTeaTimer.stop();
+				this.derTeaTimer.reset();
+				StartButton.label="Start!";
+				count=0;
+				var elephantSound:Sound = new TeeSoundClass() as Sound;
+				elephantSound.play();
+			}
+			
+			protected function TeeComboBox_changeHandler(event:IndexChangeEvent):void
+			{
+				var gewaehlt: int;
+				gewaehlt = TeeComboBox.selectedIndex;
+				MinutenStepper.value = ZeitArray[gewaehlt];	
+				SekundenStepper.value = 0;
+			}
+			
+			protected function ZeitSlider_changeHandler(event:Event):void
+			{
+				gesamtzeit = ZeitSlider.value;
+				MinutenStepper.value = (gesamtzeit - (gesamtzeit%60))/60;
+				SekundenStepper.value = gesamtzeit%60;
+				
+			}
+			
+			protected function MinutenStepper_changeHandler(event:Event):void
+			{
+				if(MinutenStepper.value == 20 && SekundenStepper.value != 0) {
+					SekundenStepper.value = 0;
+				}
+				
+				gesamtzeit = MinutenStepper.value * 60 + SekundenStepper.value;
+			}
+			
+			protected function SekundenStepper_changeHandler(event:Event):void
+			{
+				if(MinutenStepper.value == 20 && SekundenStepper.value != 0) {
+					SekundenStepper.value = 0;
+				}
+
+				gesamtzeit = MinutenStepper.value * 60 + SekundenStepper.value;
+			}
+			
+			protected function InfoButton_clickHandler(event:MouseEvent):void
+			{
+				Alert.show("Tea Online (c) Christina Czeschik 2012","Info");
+				
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+
+	</fx:Declarations>
+	<s:Panel y="10" left="10" width="515" height="295" fontSize="24" title="Tea Online">
+		<s:BorderContainer x="10" y="6" width="242" height="173">
+			<s:ComboBox id="TeeComboBox" x="10" y="46" width="221"
+						change="TeeComboBox_changeHandler(event)" dataProvider="{TeeAC}" fontSize="16"
+						selectedIndex="3">
+			</s:ComboBox>
+			<s:Label x="10" y="21" backgroundColor="#FFFFFF" color="#000000" fontSize="18" text="Select tea:"/>
+			<s:Button id="StartButton" x="10" y="105" width="220" height="44" label="Start!"
+					  click="StartButton_clickHandler(event)"/>
+
+		</s:BorderContainer>
+		<s:BorderContainer x="260" y="6" width="242" height="173">
+			<s:Label x="10" y="21" backgroundColor="#FFFFFF" color="#000000" fontSize="18" text="Or customize:"/>
+			<s:HSlider id="ZeitSlider" x="10" y="120" width="220" height="14"
+					   change="ZeitSlider_changeHandler(event)" maximum="1200" stepSize="1"
+					   value="{gesamtzeit}"/>
+			<s:NumericStepper id="MinutenStepper" x="10" y="46" width="72"
+							  change="MinutenStepper_changeHandler(event)" fontSize="16"
+							  maximum="20" value="{gesamtzeit/60}"/>
+			<s:NumericStepper id="SekundenStepper" x="141" y="46" width="72"
+							  change="SekundenStepper_changeHandler(event)" fontSize="16"
+							  maximum="59"/>
+			<s:Label x="90" y="56" backgroundColor="#FFFFFF" color="#000000" fontSize="18" text="min"/>
+			<s:Label x="219" y="56" width="11" backgroundColor="#FFFFFF" color="#000000" fontSize="18"
+					 text="s"/>
+
+		</s:BorderContainer>
+		<mx:ProgressBar id="TeaProgress" x="10" y="204" width="493" label="Loading your tea..."
+						labelPlacement="bottom" maximum="{gesamtzeit*10}" mode="manual"/>
+		<mx:LinkButton id="InfoButton" x="462" y="-27" width="41" height="20" label="Info"
+					   click="InfoButton_clickHandler(event)" enabled="true" fontSize="12"/>
+	</s:Panel>
+</s:Application>
